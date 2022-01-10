@@ -1,6 +1,6 @@
 # Image Filters interactive webapp with Steamlit
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/im-AMS/yourRepo/yourApp/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/im-AMS/Filters_Project/app.py)
 
 The aim of this project is to implement various filters and effects as seen on Photoshop, Snapchat etc.
 
