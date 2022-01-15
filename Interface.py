@@ -4,6 +4,8 @@ import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
 import pandas as pd
+from PIL import Image
+import numpy as np
 
 
 class interface(ImageFilters.filters):
@@ -42,7 +44,7 @@ class interface(ImageFilters.filters):
                 help="Default image is chosen if not uploaded",
             )
             if uploaded is not None:
-                self.img = cv.imread(uploaded.name)
+                self.img = cv.cvtColor(np.array(Image.open(uploaded)), cv.COLOR_RGB2BGR)
 
             else:
                 self.img = cv.imread(self.__default_image)
@@ -97,7 +99,8 @@ class interface(ImageFilters.filters):
             self.cartoon()
 
     def introduction(self):
-        st.markdown("""
+        st.markdown(
+            """
             This is a webapp which allows you to apply multiple filters to your images.
 
             If no image is uploaded, it uses a default image, you can upload your own too.
@@ -121,7 +124,9 @@ class interface(ImageFilters.filters):
             [Resume](https://drive.google.com/drive/folders/1MzX_eL5B40HFEXgG1c1e7b1ukBbRa1Ha?usp=sharing)
 
 
-        """,unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
     def show(self, file):
         if self.mode == "image":
@@ -330,6 +335,7 @@ class interface(ImageFilters.filters):
 
         st.sidebar.title("Params for **Cartoon Filter**")
         enable = st.sidebar.checkbox("Enable effect", value="True")
+        enable_uploaded = st.sidebar.checkbox("Use uploaded Image", value="false")
         sigma_color = st.sidebar.slider(
             "Sigma Color", min_value=0.01, max_value=90.0, step=0.1, value=18.0
         )
@@ -342,15 +348,26 @@ class interface(ImageFilters.filters):
         )
 
         if enable:
-            self.show(
-                file=super().cartoon(
-                    img=img,
-                    sigma_color=sigma_color,
-                    sigma_space=sigma_space,
-                    ksize=a,
-                    iterations=iterations,
+            if enable_uploaded:
+                self.show(
+                    file=super().cartoon(
+                        img=self.img,
+                        sigma_color=sigma_color,
+                        sigma_space=sigma_space,
+                        ksize=a,
+                        iterations=iterations,
+                    )
                 )
-            )
+            else:
+                self.show(
+                    file=super().cartoon(
+                        img=img,
+                        sigma_color=sigma_color,
+                        sigma_space=sigma_space,
+                        ksize=a,
+                        iterations=iterations,
+                    )
+                )
 
         else:
             self.show(file=img)
@@ -397,6 +414,7 @@ class interface(ImageFilters.filters):
             ax.hist(g.ravel(), 256, [0, 256], "g", alpha=0.6)
             ax.hist(b.ravel(), 256, [0, 256], "b", alpha=0.6)
             st.pyplot(fig)
+
 
 if __name__ == "__main__":
     ui = interface()
