@@ -49,12 +49,13 @@ class filters:
     def sketch(
         self,
         img,
-        thresh1,
-        thresh2,
-        size=3,
         invert=True,
         detail=0.01,
         three_channel=False,
+        auto=True,
+        thresh1=None,
+        thresh2=None,
+        size=3,
     ):
         """
         detail should be between 0-1
@@ -79,6 +80,7 @@ class filters:
         #  for now pasting same method here
         L, A, B = cv.split(cv.cvtColor(img, cv.COLOR_BGR2LAB))
 
+        # Histogram Eq
         clahe = cv.createCLAHE(clipLimit=clip_limit, tileGridSize=(a, a))
         L = clahe.apply(L)
 
@@ -86,36 +88,34 @@ class filters:
 
         img = cv.GaussianBlur(img, (a, a), blur)
 
+        if auto:
+            img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+            th, _ = cv.threshold(img, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
+            img = cv.Canny(img, th / 2, th)
+
+        else:
+            if thresh1 or thresh2 is None:
+                thresh1 = 90
+                thresh2 = 90
+                print(
+                    f"Using default values: thresh1 = {thresh1}, thresh2: {thresh2}, size: {size}"
+                )
+
+            img = cv.Canny(
+                img, threshold1=thresh1, threshold2=thresh2, apertureSize=size
+            )
+
         if three_channel:
             if invert:
-                return self.gray_to_threechannel(
-                    cv.Canny(
-                        img, threshold1=thresh1, threshold2=thresh2, apertureSize=size
-                    )
-                )
+                return self.gray_to_threechannel(img)
             else:
-                return self.gray_to_threechannel(
-                    cv.bitwise_not(
-                        cv.Canny(
-                            img,
-                            threshold1=thresh1,
-                            threshold2=thresh2,
-                            apertureSize=size,
-                        )
-                    )
-                )
+                return self.gray_to_threechannel(cv.bitwise_not(img))
 
         else:
             if invert:
-                return cv.Canny(
-                    img, threshold1=thresh1, threshold2=thresh2, apertureSize=size
-                )
+                return img
             else:
-                return cv.bitwise_not(
-                    cv.Canny(
-                        img, threshold1=thresh1, threshold2=thresh2, apertureSize=size
-                    )
-                )
+                return cv.bitwise_not(img)
 
     def gblur(self, img, ksize: tuple = (5, 5), blur: int = 5):
         """
@@ -139,7 +139,9 @@ class filters:
         iterations: int = 1,
     ):
         for _ in range(iterations):
-            img = cv.bilateralFilter(img, d=ksize, sigmaColor=sigma_color, sigmaSpace=sigma_space)
+            img = cv.bilateralFilter(
+                img, d=ksize, sigmaColor=sigma_color, sigmaSpace=sigma_space
+            )
 
         return img
 
@@ -229,6 +231,17 @@ class filters:
         return np.array(
             [0 if i < 0 else 255 if i > length else i for i in f], dtype="uint8"
         )
+
+    def hdr(self, img, sigma_s, sigma_r):
+        """
+        HDR effect
+        sigma_s: 0-200
+        sigma_r: 0-1
+        """
+        if sigma_r < 0 or sigma_r > 1:
+            raise ValueNotInRange("sigma_r not in range 0-1")
+
+        return cv.detailEnhance(img, sigma_s=sigma_s, sigma_r=sigma_r)
 
     def show(self, img, win_name=None):
         """

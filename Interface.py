@@ -14,6 +14,7 @@ class interface(ImageFilters.filters):
         "Blur",
         "Gaussian Blur",
         "Gray",
+        "HDR",
         "Emboss",
         "Invert",
         "Histogram_equalize",
@@ -98,6 +99,10 @@ class interface(ImageFilters.filters):
             st.subheader("Cartoon Filter")
             self.cartoon()
 
+        elif func == "HDR":
+            st.subheader("HDR Filter")
+            self.hdr()
+
     def introduction(self):
         st.markdown(
             """
@@ -173,9 +178,6 @@ class interface(ImageFilters.filters):
         else:
             self.show(file=img)
 
-    def cartoon(self, img=None):
-        pass
-
     def sketch(self, img=None):
 
         if img is None:
@@ -183,28 +185,38 @@ class interface(ImageFilters.filters):
 
         st.sidebar.title("Params for **Sketch**")
 
+        auto = st.sidebar.checkbox("Auto Mode", value="True")
         enable = st.sidebar.checkbox("Enable effect", value="True")
         invert = st.sidebar.checkbox("Invert", value="True")
         detail = st.sidebar.slider(
             "detail", min_value=0.005, max_value=1.0, step=0.005, value=0.13
         )
-        thresh1, thresh2 = st.sidebar.slider(
-            "threshold value", value=[42, 200], min_value=0, max_value=255, step=1
-        )
-        size = st.sidebar.slider("Size", min_value=3, max_value=7, step=2, value=3)
+
+        if auto:
+            file = super().sketch(
+                img=img, detail=detail, invert=invert, three_channel=True, auto=True
+            )
+
+        else:
+            thresh1, thresh2 = st.sidebar.slider(
+                "threshold value", value=[42, 200], min_value=0, max_value=255, step=1
+            )
+            size = st.sidebar.slider("Size", min_value=3, max_value=7, step=2, value=3)
+
+            file = super().sketch(
+                img=img,
+                thresh1=thresh1,
+                thresh2=thresh2,
+                size=size,
+                detail=detail,
+                invert=invert,
+                three_channel=True,
+                auto=False,
+            )
 
         if enable:
-            self.show(
-                file=super().sketch(
-                    img=img,
-                    thresh1=thresh1,
-                    thresh2=thresh2,
-                    size=size,
-                    detail=detail,
-                    invert=invert,
-                    three_channel=True,
-                )
-            )
+            self.show(file=file)
+
         else:
             self.show(file=img)
 
@@ -220,6 +232,25 @@ class interface(ImageFilters.filters):
             self.show(file=super().gray(img=img, three_channel=True))
         else:
             self.show(file=img)
+
+    def hdr(self, img=None):
+        if img is None:
+            img = self.img
+
+        st.sidebar.title("Params for **HDR**")
+        enable = st.sidebar.checkbox("Enable effect", value="True")
+        param1 = st.sidebar.slider(
+            "param1", min_value=0.0, max_value=200.0, step=0.5, value=9.
+        )
+        param2 = st.sidebar.slider(
+            "param2", min_value=0.0, max_value=1.0, step=0.05, value=0.1
+        )
+
+        if enable:
+            self.show(file=super().hdr(img=img, sigma_s=param1, sigma_r=param2))
+
+        else:
+            self.show(file=self.img)
 
     def emboss(self, img=None):
         if img is None:
